@@ -6,11 +6,19 @@ import productApis from "./apis/product.mjs";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import { userModel } from "./dbrepo/model.mjs";
+import fileUpload from "express-fileupload"
+import { v2 as cloudinary } from "cloudinary"
+
 
 const SECRET = process.env.SECRET || "topsceret";
 const app = express();
 const port = process.env.PORT || 4000;
-
+cloudinary.config({
+  cloud_name: 'dkazumryv',
+  api_key: '314822189378726',
+  api_secret: '4JREoDwZMb4GgiJQZazRtYCH2Ps',
+  secure: true
+});
 app.use(
   cors({
     origin: [
@@ -23,6 +31,9 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(fileUpload({
+  useTempFiles: true
+}));
 
 app.use("/api/v1", authApis);
 

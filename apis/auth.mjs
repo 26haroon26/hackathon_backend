@@ -2,29 +2,9 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import { userModel } from "../dbrepo/model.mjs";
 import { stringToHash, varifyHash } from "bcrypt-inzi";
-import bucket from "../firebaseAdmin/index.mjs"
 
 const router = express.Router();
 const SECRET = process.env.SECRET || "topsceret";
-
-router.get('/profile', (req, res) => {
-  userModel.findOne({ Email: req.body._decoded.Email }, (err, user) => {
-
-      if (err) {
-          res.status(500).send("error in getting database")
-      } else {
-          if (user) {
-              res.send({
-                  name: user.name,
-                  Email: user.Email,
-                  _id: user._id,
-              });
-          } else {
-              res.send("user not found");
-          }
-      }
-  })
-})
 
 router.post("/signup", (req, res) => {
   let body = req.body;
@@ -45,7 +25,7 @@ router.post("/signup", (req, res) => {
 
   req.body.Email = req.body.Email.toLowerCase();
 
-  userModel.findOne({ Email: body.Email }, (err, data) => {
+  userModel.findOne({ Email: req.body.Email }, (err, data) => {
     if (!err) {
       console.log("data: ", data);
 
@@ -86,7 +66,6 @@ router.post("/signup", (req, res) => {
     }
   });
 });
-
 router.post("/login", (req, res) => {
   let body = req.body;
   // if (!body.FullName || !body.Contact || !body.Email || !body.Password) {
@@ -179,6 +158,27 @@ router.post("/logout", (req, res) => {
 
   res.send({ message: "Logout successful" });
 });
+router.get('/profile', (req, res) => {
+  const token = jwt.decode(req.cookies.Token);
+  userModel.findOne({ Email: token.Email }, (err, user) => {
+
+      if (err) {
+          res.status(500).send("error in getting database")
+      } else {
+          if (user) {
+              res.send({
+                  FirstName: user.name,
+                  Email: user.Email,
+                  _id: user._id,
+              });
+          } else {
+              res.send("user not found");
+          }
+      }
+  })
+})
+
+
 
 
 

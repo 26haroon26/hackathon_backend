@@ -5,6 +5,11 @@ const userSchema = new mongoose.Schema({
   Contact: { type: Number },
   Email: { type: String, required: true },
   Password: { type: String, required: true },
+  role: {
+    type: String,
+    default: "user",
+  },
+
   createdOn: { type: Date, default: Date.now },
 });
 export const userModel = mongoose.model("Users", userSchema);
@@ -19,8 +24,14 @@ const AddProductSchema = new mongoose.Schema({
   unitPrice: Number,
   createdOn: { type: Date, default: Date.now },
 });
-
 export const AddProductModel = mongoose.model("Addproducts", AddProductSchema);
+
+const CategoryScheema = new mongoose.Schema({
+  CategoryName: { type: String },
+  CategoryImage: { type: String },
+  createdOn: { type: Date, default: Date.now },
+});
+export const CategoryModel = mongoose.model("Categories", userSchema);
 
 const mongodbURI =
   process.env.mongodbURI ||

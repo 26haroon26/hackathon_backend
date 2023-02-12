@@ -1,21 +1,29 @@
 import express from "express";
 import fs from 'fs';
 import mongoose from "mongoose";
-import { AddProductModel } from "../dbrepo/model.mjs";
+import { AddProductModel, CategoryModel } from "../dbrepo/model.mjs";
 import multer from 'multer';
 import bucket from "../firebaseAdmin/index.mjs";
+import { v2 as cloudinary } from "cloudinary";
 
-const storageConfig = multer.diskStorage({
-  // destination: "./uploads/",
-  filename: function (req, file, cb) {
-    // console.log("mul-file: ", file);
-    cb(null, `${new Date().getTime()}-${file.originalname}`);
-  },
-});
-var uploadMiddleware = multer({ storage: storageConfig });
+// const storageConfig = multer.diskStorage({
+//   // destination: "./uploads/",
+//   filename: function (req, file, cb) {
+//     // console.log("mul-file: ", file);
+//     cb(null, `${new Date().getTime()}-${file.originalname}`);
+//   },
+// });
+// var uploadMiddleware = multer({ storage: storageConfig });
+
 const router = express.Router();
 
-router.post("/product", uploadMiddleware.any(), (req, res) => {
+
+router.post('/product', async (req, res) => {
+
+  console.log(result);
+
+})
+router.post("/product", async (req, res) => {
   try {
     const body = req.body;
     const token = jwt.decode(req.cookies.Token);
@@ -29,64 +37,41 @@ router.post("/product", uploadMiddleware.any(), (req, res) => {
       });
       return;
     }
+    const file = req.files.photo;
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: "productImage",
+      width: 150,
+    });
 
-    bucket.upload(
-      req.files[0].path,
+    AddProductModel.create(
       {
-        destination: `tweetPictures/${req.files[0].filename}`,
+        productImage: result,
+        productName: body.productName,
+        productCategory: body.productCategory,
+        productDec: body.productDec,
+        unitName: body.unitName,
+        unitPrice: body.unitPrice,
       },
-      function (err, file, apiResponse) {
+      (err, saved) => {
         if (!err) {
-          file
-            .getSignedUrl({
-              action: "read",
-              expires: "03-09-2999",
-            })
-            .then((urlData, err) => {
-              if (!err) {
-                // console.log("public downloadable url: ", urlData[0]); 
+          console.log(saved);
 
-                try {
-                  fs.unlinkSync(req.files[0].path);
-                  //file removed
-                } catch (err) {
-                  // console.error(err);
-                }
-
-                AddProductModel.create(
-                  {
-                    // productImage: body.productImage,
-                    productName: body.productName,
-                    productCategory: body.productCategory,
-                    productDec: body.productDec,
-                    unitName: body.unitName,
-                    unitPrice: body.unitPrice,
-                  },
-                  (err, saved) => {
-                    if (!err) {
-                      console.log(saved);
-
-                      res.send({
-                        message: "product added successfully",
-                      });
-                    } else {
-                      res.status(500).send({
-                        message: "server error",
-                      });
-                    }
-                  }
-                );
-              }
-            });
+          res.send({
+            message: "product added successfully",
+          });
         } else {
-          // console.log("err: ", err);
-          res.status(500).send();
+          res.status(500).send({
+            message: "server error",
+          });
         }
       }
     );
+
   } catch (error) {
     // console.log("error: ", error);
   }
+  const file = req.files[0].path;
+  console.log(file);
 });
 router.get("/products", (req, res) => {
   const userID = new mongoose.Types.ObjectId(req.body.token._id);
@@ -112,7 +97,6 @@ router.get("/products", (req, res) => {
     }
   );
 });
-
 router.get("/product/:name", (req, res) => {
   console.log(req.params.name);
   const querryName = req.params.name;
@@ -135,66 +119,109 @@ router.get("/product/:name", (req, res) => {
     }
   });
 });
-router.delete("/product/:id", (req, res) => {
-  const id = req.params.id;
-
-  AddProductModel.deleteOne({ _id: id }, (err, deletedData) => {
-    console.log("deleted: ", deletedData);
-    if (!err) {
-      if (deletedData.deletedCount !== 0) {
-        res.send({
-          message: "Product has been deleted successfully",
-        });
-      } else {
-        res.status(404);
-        res.send({
-          message: "No Product found with this id: " + id,
-        });
-      }
-    } else {
-      res.status(500).send({
-        message: "server error",
-      });
-    }
-  });
-});
-router.put("/product/:id", async (req, res) => {
-  const body = req.body;
-  const id = req.params.id;
-
-  if (!body.name || !body.price || !body.description) {
-    res.status(400).send(` required parameter missing. example request body:
-        {
-            "name": "value",
-            "price": "value",
-            "description": "value"
-        }`);
-    return;
-  }
-
+router.post("/addCategory", async (req, res) => {
   try {
-    let data = await AddProductModel
-      .findByIdAndUpdate(
-        id,
+    const body = req.body;
+    if (
+      !body.CategoryName) {
+      res.status(400).send(` required parameter missing. example request body:
         {
-          name: body.name,
-          price: body.price,
-          description: body.description,
-        },
-        { new: true }
-      )
-      .exec();
+        
+            "CategoryName": "value",
+                    }`);
+      return;
+    }
+    const file = req.files.CategoryImage;
+    const Categoryimage = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: "Category",
+      width: 150,
+    })
+    console.log(Categoryimage);
+    CategoryModel.create(
+      {
+        CategoryName: body.CategoryName,
+        CategoryImage: Categoryimage,
+      },
+      (err, saved) => {
+        if (!err) {
+          console.log(saved);
 
-    console.log("updated: ", data);
+          res.send({
+            message: "product added successfully",
+          });
+        } else {
+          res.status(500).send({
+            message: "server error",
+          });
+        }
 
-    res.send({
-      message: "product modified successfully",
-    });
+      })
   } catch (error) {
-    res.status(500).send({
+    res.send({
       message: "server error",
     });
   }
 });
+// router.delete("/product/:id", (req, res) => {
+//   const id = req.params.id;
+
+//   AddProductModel.deleteOne({ _id: id }, (err, deletedData) => {
+//     console.log("deleted: ", deletedData);
+//     if (!err) {
+//       if (deletedData.deletedCount !== 0) {
+//         res.send({
+//           message: "Product has been deleted successfully",
+//         });
+//       } else {
+//         res.status(404);
+//         res.send({
+//           message: "No Product found with this id: " + id,
+//         });
+//       }
+//     } else {
+//       res.status(500).send({
+//         message: "server error",
+//       });
+//     }
+//   });
+// });
+// router.put("/product/:id", async (req, res) => {
+//   const body = req.body;
+//   const id = req.params.id;
+
+//   if (!body.name || !body.price || !body.description) {
+//     res.status(400).send(` required parameter missing. example request body:
+//         {
+//             "name": "value",
+//             "price": "value",
+//             "description": "value"
+//         }`);
+//     return;
+//   }
+
+//   try {
+//     let data = await AddProductModel
+//       .findByIdAndUpdate(
+//         id,
+//         {
+//           name: body.name,
+//           price: body.price,
+//           description: body.description,
+//         },
+//         { new: true }
+//       )
+//       .exec();
+
+//     console.log("updated: ", data);
+
+//     res.send({
+//       message: "product modified successfully",
+//     });
+//   } catch (error) {
+//     res.status(500).send({
+//       message: "server error",
+//     });
+//   }
+// });
 
 export default router;
