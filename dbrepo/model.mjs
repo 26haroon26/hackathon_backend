@@ -11,7 +11,7 @@ export const userModel = mongoose.model("Users", userSchema);
 
 const AddProductSchema = new mongoose.Schema({
   productName: { type: String, required: true },
-  // productImage: String,
+  productImage: String,
   productPrice: Number,
   productDec: String,
   productName: String,
