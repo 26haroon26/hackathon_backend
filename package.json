@@ -1,0 +1,32 @@
+{
+  "name": "hackathon_backend",
+  "version": "1.0.0",
+  "description": "hackathon",
+  "main": "server.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.mjs",
+    "dev": "nodemon server.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/26haroon26/hackathon_backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/26haroon26/hackathon_backend/issues"
+  },
+  "homepage": "https://github.com/26haroon26/hackathon_backend#readme",
+  "dependencies": {
+    "bcrypt-inzi": "^1.0.7",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "moment": "^2.29.4",
+    "mongoose": "^6.9.1",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^2.0.20"
+  }
+}
