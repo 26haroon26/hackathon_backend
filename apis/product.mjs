@@ -1,7 +1,8 @@
 import express from "express";
 import fs from 'fs';
+import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { AddProductModel, CategoryModel } from "../dbrepo/model.mjs";
+import { AddProductModel, userModel, CategoryModel } from "../dbrepo/model.mjs";
 import multer from 'multer';
 import bucket from "../firebaseAdmin/index.mjs";
 import { v2 as cloudinary } from "cloudinary";
@@ -45,7 +46,7 @@ router.post("/product", async (req, res) => {
 
     AddProductModel.create(
       {
-        productImage: result,
+        productImage: result.url,
         productName: body.productName,
         productCategory: body.productCategory,
         productDec: body.productDec,
@@ -120,27 +121,27 @@ router.get("/product/:name", (req, res) => {
   });
 });
 router.post("/addCategory", async (req, res) => {
+
   try {
     const body = req.body;
     if (
       !body.CategoryName) {
       res.status(400).send(` required parameter missing. example request body:
         {
-        
-            "CategoryName": "value",
+              "CategoryName": "value",
                     }`);
       return;
     }
-    const file = req.files.CategoryImage;
-    const Categoryimage = await cloudinary.uploader.upload(file.tempFilePath, {
+    const categoryFile = req.files.CategoryImage;
+    const Categoryimage = await cloudinary.uploader.upload(categoryFile.tempFilePath, {
       folder: "Category",
       width: 150,
-    })
+    });
     console.log(Categoryimage);
     CategoryModel.create(
       {
         CategoryName: body.CategoryName,
-        CategoryImage: Categoryimage,
+        CategoryImage: Categoryimage.url,
       },
       (err, saved) => {
         if (!err) {
@@ -151,14 +152,14 @@ router.post("/addCategory", async (req, res) => {
           });
         } else {
           res.status(500).send({
-            message: "server error",
+            message: err,
           });
         }
 
       })
   } catch (error) {
     res.send({
-      message: "server error",
+      message: error,
     });
   }
 });
@@ -185,43 +186,63 @@ router.post("/addCategory", async (req, res) => {
 //     }
 //   });
 // });
-// router.put("/product/:id", async (req, res) => {
-//   const body = req.body;
-//   const id = req.params.id;
+router.put("/updateUserFullName", async (req, res) => {
+  const body = req.body;
+  // // const token = jwt.decode(req.cookies.Token);
 
-//   if (!body.name || !body.price || !body.description) {
-//     res.status(400).send(` required parameter missing. example request body:
-//         {
-//             "name": "value",
-//             "price": "value",
-//             "description": "value"
-//         }`);
-//     return;
-//   }
+  // if (!body.newFullName) {
+  //   res.status(400).send(` required parameter missing. example request body:
+  //   {
+  //     "FullName": "value",
+  //   }`);
+  //   return;
+  // }
+  const newUserData = {
+    FullName: req.body.newFullName,
 
-//   try {
-//     let data = await AddProductModel
-//       .findByIdAndUpdate(
-//         id,
-//         {
-//           name: body.name,
-//           price: body.price,
-//           description: body.description,
-//         },
-//         { new: true }
-//       )
-//       .exec();
+  };
+  console.log(body.newFullName);
+  console.log(body.userID); if (body.userID) {
 
-//     console.log("updated: ", data);
+    const user = await userModel.findByIdAndUpdate(body.userID, newUserData, {
+      new: true,
+      runValidators: true,
+      useFindAndModify: false,
+    });
+    console.log(user);
+    res.status(200).json({
+      success: true,
+    });
 
-//     res.send({
-//       message: "product modified successfully",
-//     });
-//   } catch (error) {
-//     res.status(500).send({
-//       message: "server error",
-//     });
-//   }
-// });
+  } else {
+    res.status(200).json({
+      message: 'some thing wrong',
+    });
+  }
+
+  // try {
+  //   let data = await userModel
+  //     .findByIdAndUpdateUpdate(
+  //       body.userID,
+  //       {
+  //         FullName: newFullName,
+  //       },
+  //       { new: true }
+  //     )
+  //     .exec();
+
+  //   console.log("updated: ", data);
+
+  //   res.send({
+  //     message: "product modified successfully",
+  //   });
+  // } catch (error) {
+  //   res.send({
+  //     message: error,
+  //   });
+  // }
+
+
+});
 
 export default router;

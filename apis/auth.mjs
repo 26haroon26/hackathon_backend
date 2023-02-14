@@ -158,8 +158,8 @@ router.post("/logout", (req, res) => {
 
   res.send({ message: "Logout successful" });
 });
-router.get('/profile', (req, res) => {
-  const token = jwt.decode(req.cookies.Token);
+router.get('/profile', async (req, res) => {
+  const token = await jwt.decode(req.cookies.Token);
   userModel.findOne({ Email: token.Email }, (err, user) => {
 
       if (err) {

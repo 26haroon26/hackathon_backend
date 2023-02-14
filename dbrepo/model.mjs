@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  FirstName: { type: String },
+  FullName: { type: String },
   Contact: { type: Number },
   Email: { type: String, required: true },
   Password: { type: String, required: true },
@@ -31,7 +31,7 @@ const CategoryScheema = new mongoose.Schema({
   CategoryImage: { type: String },
   createdOn: { type: Date, default: Date.now },
 });
-export const CategoryModel = mongoose.model("Categories", userSchema);
+export const CategoryModel = mongoose.model("Categories", CategoryScheema);
 
 const mongodbURI =
   process.env.mongodbURI ||
